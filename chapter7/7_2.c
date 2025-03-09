@@ -97,11 +97,8 @@ void *my_malloc(size_t size) {
 }
 void my_free(void *ptr) {
 
-  printf("%10p\n", (char *)ptr);
-  printf("global address: %10p\n", global);
   bk *temp = (bk *)ptr - 1;
 
-  printf("temp address : %10p\n", temp);
   if (temp != NULL && temp->free == 0) {
     temp->free = 1;
   }
