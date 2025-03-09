@@ -64,7 +64,7 @@ void *my_malloc(size_t size) {
     if (ptr->size - size == sizeof(bk)) {
       printf("enter size == sizeof(bk)\n");
       ptr->free = 0;
-      ptr->next = NULL;
+      // ptr->next = ptr->next;
       ptr->size = size;
     } else {
       printf("enter size > sizeof(bk)\n");
@@ -78,7 +78,7 @@ void *my_malloc(size_t size) {
       } else {
         temp = (bk *)((char *)ptr + size + sizeof(bk));
         temp->free = 1;
-        temp->next = NULL;
+        temp->next = ptr->next;
         temp->size = free_size;
       }
       ptr->free = 0;
@@ -95,13 +95,26 @@ void *my_malloc(size_t size) {
   }
   return NULL;
 }
+void my_free(void *ptr) {
+
+  printf("%10p\n", (char *)ptr);
+  printf("global address: %10p\n", global);
+  bk *temp = (bk *)ptr - 1;
+
+  printf("temp address : %10p\n", temp);
+  if (temp != NULL && temp->free == 0) {
+    temp->free = 1;
+  }
+}
+
 int main(int argc, char *argv[]) {
-  // printf("%10p\n", sbrk(0));
-  // printf("%lu\n", sizeof(bk));
-  // sbrk(1999);
   printf("%10p\n", sbrk(0));
   char *ptr = (char *)my_malloc(200);
-  ptr = "test";
+
+  for (int i = 0; i < 10; i++) {
+    ptr[i] = 'c';
+  }
+  my_free(ptr);
   for (int i = 0; i < 5; i++) {
     char *ptr1 = (char *)my_malloc(50);
     printf("%10p\n", sbrk(0));
