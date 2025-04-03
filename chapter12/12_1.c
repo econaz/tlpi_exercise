@@ -38,13 +38,15 @@ char *getNameFromStatus(FILE *fp, uid_t uid) {
   }
 
   while (fgets(line, 64, fp) != NULL) {
-    i = sscanf(line, "Name:%s", names);
-    if (i > 0) {
+    if (strncmp(line, "Name:", 5) == 0) {
+      sscanf(line, "Name:%s", names);
       k = 0;
     }
-    j = sscanf(line, "Uid:%d%d%d%d", &rid, &eid, &sid, &fid);
+    if (strncmp(line, "Uid:", 4) == 0) {
+      sscanf(line, "Uid:%d%d%d%d", &rid, &eid, &sid, &fid);
+    }
     // if rid = uid and find name
-    if (j > 0 && rid == uid && k != -1) {
+    if (rid == uid && k == 0) {
       fclose(fp);
       return names;
     }
