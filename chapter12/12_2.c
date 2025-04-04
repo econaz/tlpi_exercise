@@ -29,29 +29,57 @@ struct Node *buildNode(char *names, pid_t pid, struct Node *brother,
 }
 void printTree(struct Node *head, int size) {
 
+  //\u250c |_ 252c --| 2514   251c
   if (head == NULL)
     return;
   while (head) {
+
     printf("%s", head->names);
     if (head->child) {
-      if (head->child->brother)
+      if (head->child->brother) {
+        // u252c ┬
         printf("\u2500\u252c\u2500");
-      else
+      } else
         printf("\u2500\u2500\u2500");
-      size = strlen(head->names) + 3 + size;
-      // printf("%d\n", size);
+      size = size + strlen(head->names) + 3;
+      printf("%d\n", size);
       printTree(head->child, size);
     }
-
     head = head->brother;
     if (head) {
       printf("\n");
-      // if (head->brother)
-      //   printf("11111");
-      for (int i = 0; i < size; i++) {
-        printf("\u2500");
+      printf("%d\n", size);
+      for (int i = 0; i < size - 2; i++) {
+        printf(" ");
       }
+      if (head->brother)
+        // u251c ├
+        printf("\u251c\u2500");
+      // u2514 └
+      else
+        printf("\u2514\u2500");
     }
+
+    //   printf("%s", head->names);
+    //   if (head->child) {
+    //     if (head->child->brother)
+    //       printf("\u2500\u252c\u2500");
+    //     else
+    //       printf("\u2500\u2500\u2500");
+    //     size = strlen(head->names) + 3 + size;
+    //     // printf("%d\n", size);
+    //     printTree(head->child, size);
+    //   }
+    //
+    //   head = head->brother;
+    //   if (head) {
+    //     printf("\n");
+    //     // if (head->brother)
+    //     //   printf("11111");
+    //     for (int i = 0; i < size; i++) {
+    //       printf("\u2500");
+    //     }
+    //   }
   }
 }
 int main(int argc, char *argv[]) {
@@ -62,12 +90,21 @@ int main(int argc, char *argv[]) {
   struct Node *fourth = buildNode("5", 5, NULL, NULL);
 
   struct Node *fith = buildNode("4", 4, NULL, NULL);
+
+  struct Node *six = buildNode("6", 6, NULL, NULL);
+  struct Node *seven = buildNode("7", 7, NULL, NULL);
+  struct Node *eight = buildNode("8", 8, NULL, NULL);
   first->child = second;
   second->child = third;
   third->brother = fourth;
+  third->child = six;
+  six->child = seven;
 
   fourth->brother = fith;
 
+  // third->child = six;
+  // six->child = second;
+  // six->brother = eight;
   printTree(first, 0);
 }
 
