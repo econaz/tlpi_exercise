@@ -23,7 +23,11 @@ struct status {
 
 struct Node *head = NULL;
 
-void initHead() { head = (struct Node *)malloc(sizeof(struct Node)); }
+void initHead() {
+  head = (struct Node *)malloc(sizeof(struct Node));
+  head->names = "init";
+  head->pid = 0;
+}
 
 struct Node *buildNode(char *names, pid_t pid, struct Node *brother,
                        struct Node *child) {
@@ -42,24 +46,26 @@ void printTree(struct Node *head, int size, char *flag) {
   if (head == NULL)
     return;
   while (head) {
-
     printf("%s", head->names);
     if (head->child) {
+      int sizein = size + strlen(head->names) + 3;
+
       if (head->child->brother) {
         // u252c ┬
         printf("\u2500\u252c\u2500");
-        flag[size + 2] = 'a';
+        flag[sizein - 2] = 'a';
 
       } else
         printf("\u2500\u2500\u2500");
 
-      int sizein = size + strlen(head->names) + 3;
       printTree(head->child, sizein, flag);
     }
     head = head->brother;
     if (head) {
       printf("\n");
 
+      if (head->brother == NULL)
+        flag[size - 2] = 'b';
       for (int i = 0; i < size - 2; i++) {
         if (flag[i] == 'a')
           printf("\u2502");
@@ -76,41 +82,33 @@ void printTree(struct Node *head, int size, char *flag) {
   }
 }
 // int main(int argc, char *argv[]) {
-//   struct Node *second = buildNode("2", 2, NULL, NULL);
-//   struct Node *first = buildNode("1", 1, NULL, NULL);
+//   struct Node *one = buildNode("1", 1, NULL, NULL);
+//   struct Node *two = buildNode("2", 2, NULL, NULL);
 //
-//   struct Node *third = buildNode("3", 3, NULL, NULL);
-//   struct Node *fourth = buildNode("5", 5, NULL, NULL);
+//   struct Node *three = buildNode("3", 3, NULL, NULL);
+//   struct Node *five = buildNode("5", 5, NULL, NULL);
 //
-//   struct Node *fith = buildNode("4", 4, NULL, NULL);
+//   struct Node *four = buildNode("4", 4, NULL, NULL);
 //
 //   struct Node *six = buildNode("6", 6, NULL, NULL);
 //   struct Node *seven = buildNode("7", 7, NULL, NULL);
 //   struct Node *eight = buildNode("8", 8, NULL, NULL);
-//   struct Node *e = buildNode("9", 8, NULL, NULL);
+//   struct Node *nine = buildNode("9", 9, NULL, NULL);
 //
-//   struct Node *e1 = buildNode("18", 8, NULL, NULL);
-//   struct Node *e2 = buildNode("28", 8, NULL, NULL);
-//   struct Node *e3 = buildNode("38", 8, NULL, NULL);
+//   struct Node *ten = buildNode("10", 10, NULL, NULL);
+//   struct Node *eleven = buildNode("11", 11, NULL, NULL);
 //
-//   first->child = second;
-//   second->child = third;
-//   third->brother = fourth;
-//   third->child = six;
-//   six->child = seven;
+//   one->child = two;
+//   three->brother = four;
+//   two->child = five;
+//   // five->brother = three;
+//   two->brother = ten;
+//   five->child = nine;
+//   nine->brother = eight;
+//   ten->brother = eleven;
 //
-//   seven->brother = fith;
-//   fith->brother = e;
-//   // fourth->brother = fith;
-//   six->brother = e1;
-//   e1->brother = e2;
-//   e2->brother = e3;
-//
-//   // third->child = six;
-//   // six->child = second;
-//   // six->brother = eight;
 //   char *flag = (char *)malloc(sizeof(char));
-//   printTree(first, 0, flag);
+//   printTree(one, 0, flag);
 // }
 
 struct status *getPPid(FILE *fp) {
@@ -143,10 +141,40 @@ struct status *getPPid(FILE *fp) {
   }
   return NULL;
 }
-void insetNode(struct status *status) {
 
-  if (status->ppid == 0) {
+int search(struct Node *head, struct Node *node, struct status *status) {
+
+  while (head) {
+    if (head->pid == status->ppid) {
+      if (head->child) {
+        head = head->child;
+        while (head->brother) {
+          head = head->brother;
+        }
+        head->brother = node;
+        return 0;
+      } else {
+        head->child = node;
+        return 0;
+      }
+    } else {
+      if (search(head->child, node, status) == 0) {
+        return 0;
+      }
+    }
+    head = head->brother;
   }
+  return -1;
+}
+
+int insetNode(struct status *status) {
+
+  struct Node *node;
+  struct Node *cur;
+
+  node = buildNode(status->names, status->pid, NULL, NULL);
+  cur = head;
+  return search(cur, node, status);
 }
 char *getcmdline(FILE *fp) {
   char *line;
@@ -167,10 +195,17 @@ int main(int argc, char *argv[]) {
   FILE *fp;
   char *names;
   struct status *stus;
+  char *flag;
 
   names = (char *)malloc(40 * (sizeof(char)));
   if (names == NULL) {
     printf("malloc error\n");
+    exit(EXIT_FAILURE);
+  }
+
+  flag = (char *)malloc(20 * sizeof(char));
+  if (flag == NULL) {
+    printf("malloc flag error\n");
     exit(EXIT_FAILURE);
   }
 
@@ -180,6 +215,7 @@ int main(int argc, char *argv[]) {
     printf("dir error\n");
     exit(EXIT_FAILURE);
   }
+  initHead();
   while ((dt = readdir(dirs)) != NULL) {
     strtol(dt->d_name, &endptr, 10);
 
@@ -198,7 +234,12 @@ int main(int argc, char *argv[]) {
       // init str
       strcpy(str, "/proc/");
       stus = getPPid(fp);
+      if (insetNode(stus) == -1) {
+        printf("insetNode error");
+        exit(EXIT_FAILURE);
+      }
     }
   }
+  printTree(head, 0, flag);
   exit(EXIT_SUCCESS);
 }
