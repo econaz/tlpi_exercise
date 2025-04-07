@@ -7,7 +7,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
-
 struct Node {
   char *names;
   pid_t pid;
@@ -40,15 +39,22 @@ struct Node *buildNode(char *names, pid_t pid, struct Node *brother,
   re->child = child;
   return re;
 }
-void printTree(struct Node *head, int size, char *flag) {
+char *toString(pid_t pid) {
+  char *spid = (char *)malloc(16 * sizeof(char));
 
+  sprintf(spid, "%u", pid);
+  return spid;
+}
+
+void printTree(struct Node *head, int size, char *flag) {
   // 250c |_ 252c --| 2514   251c
   if (head == NULL)
     return;
   while (head) {
-    printf("%s", head->names);
+
+    printf("%s(%u)", head->names, head->pid);
     if (head->child) {
-      int sizein = size + strlen(head->names) + 3;
+      int sizein = size + strlen(head->names) + strlen(toString(head->pid)) + 5;
 
       if (head->child->brother) {
         // u252c ┬
@@ -81,35 +87,6 @@ void printTree(struct Node *head, int size, char *flag) {
     }
   }
 }
-// int main(int argc, char *argv[]) {
-//   struct Node *one = buildNode("1", 1, NULL, NULL);
-//   struct Node *two = buildNode("2", 2, NULL, NULL);
-//
-//   struct Node *three = buildNode("3", 3, NULL, NULL);
-//   struct Node *five = buildNode("5", 5, NULL, NULL);
-//
-//   struct Node *four = buildNode("4", 4, NULL, NULL);
-//
-//   struct Node *six = buildNode("6", 6, NULL, NULL);
-//   struct Node *seven = buildNode("7", 7, NULL, NULL);
-//   struct Node *eight = buildNode("8", 8, NULL, NULL);
-//   struct Node *nine = buildNode("9", 9, NULL, NULL);
-//
-//   struct Node *ten = buildNode("10", 10, NULL, NULL);
-//   struct Node *eleven = buildNode("11", 11, NULL, NULL);
-//
-//   one->child = two;
-//   three->brother = four;
-//   two->child = five;
-//   // five->brother = three;
-//   two->brother = ten;
-//   five->child = nine;
-//   nine->brother = eight;
-//   ten->brother = eleven;
-//
-//   char *flag = (char *)malloc(sizeof(char));
-//   printTree(one, 0, flag);
-// }
 
 struct status *getPPid(FILE *fp) {
   char line[64];
@@ -119,6 +96,10 @@ struct status *getPPid(FILE *fp) {
   struct status *stus;
 
   names = (char *)malloc(60 * sizeof(char));
+  if (names == NULL) {
+    printf("getPPid malloc error");
+    exit(EXIT_FAILURE);
+  }
 
   while (fgets(line, 64, fp) != NULL) {
 
