@@ -77,7 +77,8 @@ void readDirs(char *path) {
         if (dt->d_type == DT_LNK) {
           strcat(str, dt->d_name);
           read = readlink(str, buf, 2048);
-          if (strcmp(path, buf) == 0) {
+          // printf("%s\n", buf);
+          if (strncmp(buf, path, strlen(path)) == 0) {
             names = readStatus(strstatus);
             if (names != NULL) {
               printf("%s ---- %s -> %s\n", names, str, path);
@@ -91,7 +92,6 @@ void readDirs(char *path) {
   }
 }
 int main(int argc, char *argv[]) {
-  readDirs("/home/econs/.cache/nvidia/GLCache/a084c958fc5501ddb9b6f6d5d507b3ef/"
-           "863b3b572e8373a5/559ef6924a35a0e8.toc");
+  readDirs("/opt/google/chrome/resources.pak");
   exit(EXIT_SUCCESS);
 }
