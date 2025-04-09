@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 //
-// 测试两个文件不相同，因为O_APPEND是独占
+// because O_APPEND,the two file is not same;
 int main(int argc, char *argv[]) {
 
   int fd;
