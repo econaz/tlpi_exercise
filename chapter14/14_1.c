@@ -23,6 +23,7 @@ int creatFile(char *dir, int num) {
       return -1;
     }
     fputc('c', fp);
+    fclose(fp);
   }
   return 0;
 }
@@ -30,20 +31,18 @@ int creatFile(char *dir, int num) {
 void creatRandom(int seq[], int num) {
 
   int i, rd, k;
-  printf("%d\n", seq[100]);
   for (i = 0; i < num; i++) {
     srand((unsigned)time(NULL) + (unsigned)rand());
     rd = rand() % 100000;
     printf("%d\n", rd);
 
-    for (k = i - 1; k >= 0; k--) {
-      if (seq[k] == seq[i])
+    for (k = 0; k < i; k++)
+      if (seq[k] == rd)
         break;
-    }
-    if (seq[k] == seq[i])
-      i--;
-    else
+    if (k == i)
       seq[i] = rd;
+    else
+      i--;
   }
 }
 int checkDir(char *dir) {
@@ -56,7 +55,7 @@ int checkDir(char *dir) {
 }
 
 int creatFileRandom(int seq[], char *dir, int num) {
-  char filename[20];
+  char filename[64];
   FILE *fp;
   int i;
 
@@ -66,10 +65,11 @@ int creatFileRandom(int seq[], char *dir, int num) {
     printf("%s\n", filename);
     fp = fopen(filename, "w+");
     if (fp == NULL) {
-      printf("fopen error");
+      printf("%s fopen error\n", filename);
       return -1;
     }
     fputc('c', fp);
+    fclose(fp);
   }
   return 0;
 }
@@ -78,12 +78,10 @@ int deleteFile(int seq[], char *dir, int num) {
   FILE *fp;
   char filename[20];
   int i;
-  qsort(seq, num, sizeof(int), compare);
+  if (seq != NULL) {
+    qsort(seq, num, sizeof(int), compare);
+  }
 
-  // for (int k = 0; k < num; k++) {
-  //
-  //   printf("%d\n", seq[k]);
-  // }
   for (i = 0; i < num; i++) {
     if (seq == NULL) {
       sprintf(filename, "%s/x%06d", dir, i);
@@ -91,12 +89,10 @@ int deleteFile(int seq[], char *dir, int num) {
       sprintf(filename, "%s/x%06d", dir, seq[i]);
     }
     if (remove(filename) == -1) {
-      printf("\n");
-      printf("%s\n", filename);
       printf("remove file error");
       return -1;
     } else {
-      printf("%s success!\n", filename);
+      printf("remove %s success!\n", filename);
     }
   }
   return 0;
@@ -126,11 +122,10 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
   if (random) {
-    printf("%d\n", num);
     seq = (int *)malloc(sizeof(int) * (num));
     creatRandom(seq, num);
-    // creatFileRandom(seq, dir, num);
-    // deleteFile(seq, dir, num);
+    creatFileRandom(seq, dir, num);
+    deleteFile(seq, dir, num);
   } else {
     creatFile(dir, num);
     deleteFile(NULL, dir, num);
