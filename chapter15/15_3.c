@@ -1,4 +1,3 @@
-#include <stdio.h>
 #define _BSD_SOURCE
 #include "tlpi_hdr.h"
 #include <sys/stat.h>
@@ -35,11 +34,39 @@ static void displayStatInfo(const struct stat *sb) {
     break;
   }
 
-  printf("Device containing i-node: major = %ld  minor=%ld\n",
-         (long)major(sb->st_dev), (long)minor(sb->st_dev));
-  printf("I-node number:             %ld\n", (long)sb->st_ino);
-  printf("Mode:                      %lo (%s)\n", (unsigned long)sb->st_mode,
-         filePermStr(sb->st_mode, 0));
+  printf("File size:                %lld bytes\n", (long long)sb->st_size);
+  printf("Optimal I/O block size :  %ld bytes\n", (long)sb->st_blksize);
+  printf("512B block allocated:     %lld\n", (long long)sb->st_blocks);
+  printf("Last file access:         %lf\n",
+         (double)(sb->st_atim.tv_sec + sb->st_atim.tv_nsec));
+  printf("Last file modification:   %lf\n",
+         (double)(sb->st_mtim.tv_sec + sb->st_mtim.tv_nsec));
+  printf("Last status change:       %lf\n",
+         (double)(sb->st_ctim.tv_sec + sb->st_ctim.tv_nsec));
+}
 
-  if (sb->st_mode & (S_ISUID | S_ISGID | S_ISVTX))
+int main(int argc, char *argv[]) {
+  struct stat sb;
+  Boolean statLink;
+  int fname;
+
+  statLink = (argc > 1) && strcmp(argv[1], "-l") == 0;
+
+  fname = statLink ? 2 : 1;
+
+  if (fname >= argc || (argc > 1) && strcmp(argv[1], "--help") == 0)
+    usageErr("%s [-l] file\n"
+             "    -l = use lstat() instead of stat()\n",
+             argv[0]);
+  if (statLink) {
+    if (lstat(argv[fname], &sb) == -1)
+      errExit("lstat");
+  } else {
+    if (stat(argv[fname], &sb) == -1)
+      errExit("stat");
+  }
+
+  displayStatInfo(&sb);
+
+  exit(EXIT_SUCCESS);
 }
