@@ -1,10 +1,4 @@
-
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#define _XOPEN_SOURCE 6O0
+#define _XOPEN_SOURCE 600
 #include "tlpi_hdr.h"
 #include <ftw.h>
 
@@ -47,6 +41,50 @@ static int dirTree(const char *pathname, const struct stat *sbuf, int type,
     printf("?");
     break;
   }
-  printf("%s   ",
-         (type == FTW_D) ? "D   ": (type == FTW_DNR) ? "DNR":
+  printf("%s   ", (type == FTW_D)     ? "D   "
+                  : (type == FTW_DNR) ? "DNR"
+                  : (type == FTW_DP)  ? "DP "
+                  : (type == FTW_F)   ? "F    "
+                  : (type == FTW_SL)  ? "SL "
+                  : (type == FTW_SLN) ? "SLN "
+                  : (type == FTW_NS)  ? "NS "
+                                      : "   ");
+
+  if (type != FTW_NS)
+    printf("%7ld ", (long)sbuf->st_ino);
+  else
+    printf("       ");
+
+  printf(" %*s", 4 * ftwb->level, "");
+  printf("%s\n", &pathname[ftwb->base]);
+  return 0;
+}
+
+int main(int argc, char *argv[]) {
+  int flags, opt;
+
+  flags = 0;
+  while ((opt = getopt(argc, argv, "dmp")) != -1) {
+    switch (opt) {
+    case 'd':
+      flags |= FTW_DEPTH;
+      break;
+    case 'm':
+      flags |= FTW_MOUNT;
+      break;
+    case 'p':
+      flags |= FTW_PHYS;
+      break;
+    default:
+      usageError(argv[0], NULL);
+    }
+  }
+  if (argc > optind + 1)
+    usageError(argv[0], NULL);
+
+  if (nftw((argc > optind) ? argv[optind] : ".", dirTree, 10, flags) == -1) {
+    perror("nftw");
+    exit(EXIT_FAILURE);
+  }
+  exit(EXIT_SUCCESS);
 }
