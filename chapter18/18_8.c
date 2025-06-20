@@ -13,46 +13,45 @@ typedef int (*func)(const char *pathname, const struct stat *statbuf,
 
 int handle(const char *dirpath, int flags, func fun) {
 
-  // struct stat statbuf;
-  // DIR *dir;
-  // struct dirent *dirt;
-  // int typeflag;
-  // struct FTW ftwbuf;
-  //
-  // if (flags & FTW_PHYS) {
-  //   if (lstat(dirpath, &statbuf) == -1) {
-  //     return -1;
-  //   }
-  //   if (S_ISLNK(statbuf.st_mode))
-  //     typeflag = FTW_NS;
-  //
-  // } else {
-  //   if (stat(dirpath, &statbuf) == -1)
-  //     return -1;
-  // }
-  // if (flags & FTW_CHDIR) {
-  //   if (chdir(dirpath) == -1)
-  //     return -1;
-  // }
-  //
-  // if (S_ISDIR(statbuf.st_mode)) {
-  //   typeflag = FTW_D;
-  //   if (flags & FTW_DEPTH) {
-  //     typeflag = FTW_DP;
-  //   }
-  // }
-  // if (access(dirpath, R_OK) == -1) {
-  //   typeflag = FTW_DNR;
-  // }
-  // if (!S_ISDIR(statbuf.st_mode) && !S_ISLNK(statbuf.st_mode))
-  //   typeflag = FTW_F;
+  struct stat statbuf;
+  DIR *dir;
+  struct dirent *dirt;
+  int typeflag;
+  struct FTW ftwbuf;
 
-  // if (flags & FTW_DEPTH && typeflag == FTW_D){
-  //
-  // }
+  if (flags & FTW_PHYS) {
+    if (lstat(dirpath, &statbuf) == -1) {
+      return -1;
+    }
+    if (S_ISLNK(statbuf.st_mode))
+      typeflag = FTW_NS;
 
-  printf("%s\n", dirpath);
-  // fun(dirpath, &statbuf, typeflag, &ftwbuf);
+  } else {
+    if (stat(dirpath, &statbuf) == -1)
+      return -1;
+  }
+  if (flags & FTW_CHDIR) {
+    if (chdir(dirpath) == -1)
+      return -1;
+  }
+
+  if (S_ISDIR(statbuf.st_mode)) {
+    typeflag = FTW_D;
+    if (flags & FTW_DEPTH) {
+      typeflag = FTW_DP;
+    }
+  }
+  if (access(dirpath, R_OK) == -1) {
+    typeflag = FTW_DNR;
+  }
+  if (!S_ISDIR(statbuf.st_mode) && !S_ISLNK(statbuf.st_mode))
+    typeflag = FTW_F;
+
+  if (flags & FTW_DEPTH && typeflag == FTW_D) {
+  }
+
+  // printf("%s\n", dirpath);
+  fun(dirpath, &statbuf, typeflag, &ftwbuf);
   return 1;
 }
 
@@ -77,18 +76,20 @@ int ftw_first(const char *dirpath, func func, int nopenfd, int flags) {
 
   stat(dirpath, &statbuf);
   // handle(dirpath, flags, func);
-  printf("%s\n", dirpath);
+  // printf("%s\n", dirpath);
   if (S_ISDIR(statbuf.st_mode)) {
     dirp = opendir(dirpath);
     while ((dirt = readdir(dirp)) != NULL) {
       if (strcmp(dirt->d_name, "..") == 0 || strcmp(dirt->d_name, ".") == 0)
         continue;
+      printf("%s\n", dirt->d_name);
       strncpy(pathname, dirpath, 40960);
       strcat(pathname, "/");
       strcat(pathname, dirt->d_name);
+      // printf("%s\n", pathname);
       ftw_first(pathname, func, nopenfd, flags);
     }
-    // closedir(dirp);
+    closedir(dirp);
   }
   return 1;
 }
