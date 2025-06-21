@@ -11,8 +11,7 @@
 typedef int (*func)(const char *pathname, const struct stat *statbuf,
                     int typeflag, struct FTW *ftwbuf);
 
-int handle(const char *dirpath, int flags, func fun) {
-
+int handle(const char *dirpath, int flags, func fun, int level) {
   struct stat statbuf;
   DIR *dir;
   struct dirent *dirt;
@@ -20,12 +19,10 @@ int handle(const char *dirpath, int flags, func fun) {
   struct FTW ftwbuf;
 
   if (flags & FTW_PHYS) {
-    if (lstat(dirpath, &statbuf) == -1) {
+    if (lstat(dirpath, &statbuf) == -1)
       return -1;
-    }
     if (S_ISLNK(statbuf.st_mode))
-      typeflag = FTW_NS;
-
+      typeflag = FTW_SL;
   } else {
     if (stat(dirpath, &statbuf) == -1)
       return -1;
@@ -47,47 +44,42 @@ int handle(const char *dirpath, int flags, func fun) {
   if (!S_ISDIR(statbuf.st_mode) && !S_ISLNK(statbuf.st_mode))
     typeflag = FTW_F;
 
-  if (flags & FTW_DEPTH && typeflag == FTW_D) {
-  }
-
-  // printf("%s\n", dirpath);
+  ftwbuf.base = strlen(dirpath);
+  ftwbuf.level = level;
   fun(dirpath, &statbuf, typeflag, &ftwbuf);
   return 1;
 }
 
-int ftw_depth(const char *dirpath, func func, int nopenfd, int flags) {
-
-  // DIR *dirp;
-  // struct dirent *dirt;
-  // dirp = opendir(dirpath);
-  //
-  // while ((dirt = readdir(dirp)) != NULL) {
-  //   ftw_depth(dirt->d_name, func, nopenfd, flags);
-  // }
-  // handle(dirpath, flags, func);
-  //
-  // return 1;
-}
-int ftw_first(const char *dirpath, func func, int nopenfd, int flags) {
+int ftwc(const char *dirpath, func func, int nopenfd, int flags, int level) {
   DIR *dirp;
   struct dirent *dirt;
   struct stat statbuf;
-  char pathname[40960];
+  char pathname[4096];
 
-  stat(dirpath, &statbuf);
-  // handle(dirpath, flags, func);
-  // printf("%s\n", dirpath);
+  if (flags & FTW_PHYS)
+    lstat(dirpath, &statbuf);
+  else
+    stat(dirpath, &statbuf);
+
+  if (!(flags & FTW_DEPTH)) {
+    handle(dirpath, flags, func, level);
+  }
   if (S_ISDIR(statbuf.st_mode)) {
     dirp = opendir(dirpath);
+    if (dirp == NULL) {
+      return -1;
+    }
     while ((dirt = readdir(dirp)) != NULL) {
+      level += 1;
       if (strcmp(dirt->d_name, "..") == 0 || strcmp(dirt->d_name, ".") == 0)
         continue;
-      printf("%s\n", dirt->d_name);
-      strncpy(pathname, dirpath, 40960);
+      strncpy(pathname, dirpath, 4096);
       strcat(pathname, "/");
       strcat(pathname, dirt->d_name);
-      // printf("%s\n", pathname);
-      ftw_first(pathname, func, nopenfd, flags);
+      ftwc(pathname, func, nopenfd, flags, level);
+    }
+    if (flags & FTW_DEPTH) {
+      handle(dirpath, flags, func, level);
     }
     closedir(dirp);
   }
@@ -95,12 +87,7 @@ int ftw_first(const char *dirpath, func func, int nopenfd, int flags) {
 }
 
 int mynftw(const char *dirpath, func func, int nopenfd, int flags) {
-
-  if (flags & FTW_DEPTH) {
-    ftw_depth(dirpath, func, nopenfd, flags);
-  } else {
-    ftw_first(dirpath, func, nopenfd, flags);
-  }
+  ftwc(dirpath, func, nopenfd, flags, 0);
   return 1;
 }
 static int file_c = 0;
@@ -109,7 +96,6 @@ static int link_c = 0;
 
 int calfile(const char *path, const struct stat *statbuf, int type,
             struct FTW *ftwbuf) {
-
   if (S_ISREG(statbuf->st_mode))
     file_c++;
   if (S_ISDIR(statbuf->st_mode))
@@ -123,6 +109,7 @@ int main(int argc, char *argv[]) {
   int flag = 0;
 
   flag |= FTW_PHYS;
+  // flag |= FTW_DEPTH;
   if (mynftw(argv[1], calfile, 10, flag) == -1) {
     printf("error nftw");
     exit(EXIT_FAILURE);
