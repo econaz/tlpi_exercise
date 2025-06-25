@@ -1,5 +1,3 @@
-#include <string.h>
-#include <sys/stat.h>
 #define _XOPEN_SOURCE 600
 #include <ftw.h>
 #include <limits.h>
@@ -28,27 +26,29 @@ static void displayInotifyEvent(struct inotify_event *i) {
 }
 #define BUF_LEN (10 * (sizeof(struct inotify_event) + NAME_MAX + 1))
 
-int add_to_watch(char *path, int inotofityFd) {
+static int inotifyFd;
+
+int add(const char *fpath, const struct stat *sb, int typeflag,
+        struct FTW *ftwbuf) {
 
   int mask = IN_CREATE | IN_DELETE | IN_MOVED_TO | IN_MOVED_FROM;
-  inotify_add_watch(inotofityFd, path, mask);
+  int wd;
+  if (S_ISDIR(sb->st_mode)) {
+    wd = inotify_add_watch(inotifyFd, fpath, mask);
+    if (wd == -1)
+      errExit("inotify_add_watch");
+    printf("Watching %s using wd %d\n", fpath, wd);
+  }
   return 0;
 }
 
-int add_inotify(const char *fpath, struct stat *sb, int typeflag,
-                struct FTW *ftwbuf) {
-
-  if (S_ISDIR(sb->st_mode)) {
-    add_to_watch(fpath, int inotofityFd)
-  }
-}
-
 int main(int argc, char *argv[]) {
-  int inotifyFd, wd, j;
+  int wd, j, flag = 0;
   char buf[BUF_LEN];
   ssize_t numRead;
   char *p;
   struct inotify_event *event;
+  flag |= FTW_PHYS;
 
   if (argc < 2 || strcmp(argv[1], "--help") == 0)
     usageErr("%s pathname... \n", argv[0]);
@@ -58,14 +58,9 @@ int main(int argc, char *argv[]) {
     errExit("inotify_event");
 
   for (j = 1; j < argc; j++) {
-    wd = inotify_add_watch(inotifyFd, argv[j],
-                           IN_CREATE | IN_MOVED_FROM | IN_MOVED_TO | IN_DELETE);
-    if (wd == -1)
-      errExit("inotify_add_watch");
-
-    printf("Watching %s using wd %d\n", argv[j], wd);
+    if (nftw(argv[j], add, 10, flag) == -1)
+      errExit("nftw");
   }
-
   for (;;) {
     numRead = read(inotifyFd, buf, BUF_LEN);
     if (numRead == 0)
