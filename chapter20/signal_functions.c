@@ -1,8 +1,5 @@
-#include <bits/types/siginfo_t.h>
-#include <bits/types/sigset_t.h>
-#include <stdio.h>
 #define _GNU_SOURCE
-// #include "signal_functions.h"
+#include "signal_functions.h"
 #include "tlpi_hdr.h"
 #include <signal.h>
 #include <string.h>
@@ -36,10 +33,13 @@ int printSigMask(FILE *of, const char *msg) {
 
 int printPendingSigs(FILE *of, const char *msg) {
   sigset_t pendingSigs;
+
   if (msg != NULL)
     fprintf(of, "%s", msg);
+
   if (sigpending(&pendingSigs) == -1)
     return -1;
+
   printSigset(of, "\t\t", &pendingSigs);
   return 0;
 }
