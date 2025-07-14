@@ -12,13 +12,13 @@ int main(int argc, char *argv[]) {
 
   int numSigs = getInt(argv[1], GN_GT_0, "num-sigs");
 
-  // struct sigaction sa;
-  // sigemptyset(&sa.sa_mask);
-  // sa.sa_flags = 0;
-  // sa.sa_handler = handler;
-  //
-  // if (sigaction(TESTSIG, &sa, NULL) == -1)
-  //   errExit("sigaction");
+  struct sigaction sa;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  sa.sa_handler = handler;
+
+  if (sigaction(TESTSIG, &sa, NULL) == -1)
+    errExit("sigaction");
 
   sigset_t blockedMask;
   sigemptyset(&blockedMask);
