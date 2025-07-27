@@ -1,5 +1,4 @@
 #include "tlpi_hdr.h"
-#include <stdio.h>
 #include <wait.h>
 
 int main(int argc, char *argv[]) {
@@ -15,13 +14,13 @@ int main(int argc, char *argv[]) {
   default:
     wait(&status);
   }
-
-  printf("p %d\n", status);
   if (WIFEXITED(status))
     printf("%d\n", WEXITSTATUS(status));
 
   exit(EXIT_SUCCESS);
 }
-// -1
-//
-//
+// -1 补码 0xFFFF 因为只用后16位的高8位表示状态码所以是0x0000FF00
+//  WIFEXITED 为(status &0x7F) == 0  为true
+// WEXITSTATUS 为 (status & 0xFF00) >> 8
+// 为 0xFF00 & 0xFF00为0xFF00 右移8位为0x00FF;
+// 0x000000FF 十进制为255
