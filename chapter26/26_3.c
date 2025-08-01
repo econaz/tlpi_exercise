@@ -22,12 +22,12 @@ void printWaitStatus(const char *msg, const siginfo_t *info) {
   else if (info->si_code == CLD_CONTINUED)
     printf("child countined\n");
   else
-    printf("child");
+    printf("child\n");
 }
 int main(int argc, char *argv[]) {
   siginfo_t info;
   pid_t childPid;
-  memset(&info, 0, sizeof(siginfo_t));
+
   if (argc > 1 && strcmp(argv[1], "--help") == 0)
     usageErr("%s [exit-status]\n", argv[0]);
 
@@ -41,31 +41,19 @@ int main(int argc, char *argv[]) {
     else
       for (;;)
         pause();
+    printf("test");
     exit(EXIT_FAILURE);
 
   default:
     for (;;) {
-      if (waitid(P_ALL, 0, &info, WEXITED | WSTOPPED | WCONTINUED) == -1)
-        errExit("waitid");
-      //       childPid = waitid(P_ALL, 0, &info,
-      //                         WEXITED | WSTOPPED
-      // #ifdef WCONTINUED
-      //                             | WCONTINUED
-      // #endif
-      //       );
-      // printf("eeeee");
-      // if (childPid == -1)
-      // errExit("waitid");
-      // printWaitStatus(NULL, &info);
-      if (info.si_code == CLD_STOPPED || info.si_code == CLD_KILLED ||
-          info.si_code == CLD_EXITED)
-        exit(EXIT_SUCCESS);
 
-      // printf("waitpid() return: PID=%ld;status=0x%04x (%d,%d)\n",
-      //        (long)childPid, (unsigned int)info.si_status, info.si_status >>
-      //        8, info.si_status & 0xff);
-      // if (WIFEXITED(status) || WIFSIGNALED(status))
-      //   exit(EXIT_SUCCESS);
+      childPid = waitid(P_ALL, 0, &info, WEXITED);
+      if (childPid == -1)
+        errExit("waitid");
+      printf("child exit with %d\n", info.si_status);
+      printWaitStatus(NULL, &info);
+      if (info.si_code == CLD_KILLED || info.si_code == CLD_EXITED)
+        exit(EXIT_SUCCESS);
     }
   }
 }
