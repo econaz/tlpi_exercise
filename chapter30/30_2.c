@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef enum { FALSE, TRUE } Boolean;
+
 typedef struct tree Tree;
 struct tree {
 
@@ -87,24 +89,20 @@ int add(Tree *tree, char *key, void *value) {
     int cp = strcmp(tree->key, key);
     Tree *ptr;
     if (cp > 0) {
-      ptr = tree->right;
-      if (ptr == NULL) {
-        tree->right = node;
-        break;
-      }
-      tree = ptr;
+      ptr = tree;
+      tree = tree->right;
+      if (tree == NULL)
+        ptr->right = node;
     } else if (cp < 0) {
-      ptr = tree->left;
-      if (ptr == NULL) {
-        tree->left = node;
-        break;
-      }
-      tree = ptr;
+      ptr = tree;
+      tree = tree->right;
+      if (tree == NULL)
+        ptr->right = node;
     } else {
       s = pthread_mutex_unlock(&tree->mutex);
-      // if (s != 0)
-      // return -1;
-      break;
+      if (s != 0)
+        return -1;
+      return 0;
     }
     s = pthread_mutex_unlock(&tree->mutex);
     if (s != 0)
@@ -113,6 +111,43 @@ int add(Tree *tree, char *key, void *value) {
   return 0;
 }
 
-int delete(Tree *tree, char *key) {}
+Tree *lookupTree(Tree *tree, char *key, void **value) {
 
-int lookup(Tree *tree, char *key, void **value) {}
+  if (tree == NULL)
+    return NULL;
+
+  int cmp = strcmp(tree->key, key);
+  if (cmp > 0)
+    lookupTree(tree->right, key, value);
+  else if (cmp < 0)
+    lookupTree(tree->left, key, value);
+  else
+    return tree;
+  return NULL;
+}
+
+int delete(Tree *tree, char *key) {
+
+  Tree *node = lookupTree(tree, key, NULL);
+  if (node == NULL)
+    return -1;
+
+  int s = pthread_mutex_lock(&tree->mutex);
+  if (s != 0)
+    return -1;
+}
+
+Boolean lookup(Tree *tree, char *key, void **value) {
+
+  if (tree == NULL)
+    return FALSE;
+
+  int cmp = strcmp(tree->key, key);
+  if (cmp > 0)
+    lookup(tree->right, key, value);
+  else if (cmp < 0)
+    lookup(tree->left, key, value);
+  else
+    return TRUE;
+  return FALSE;
+}
