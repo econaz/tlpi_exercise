@@ -128,13 +128,23 @@ Tree *lookupTree(Tree *tree, char *key, void **value) {
 
 int delete(Tree *tree, char *key) {
 
-  Tree *node = lookupTree(tree, key, NULL);
-  if (node == NULL)
-    return -1;
+  while (tree) {
 
-  int s = pthread_mutex_lock(&tree->mutex);
-  if (s != 0)
-    return -1;
+    Tree *ptr;
+    int cmp = strcmp(tree->key, key);
+    if (cmp > 0) {
+
+      ptr = tree;
+      tree = tree->right;
+
+      // todo
+    }
+  }
+  int cmp = strcmp(tree->key, key);
+
+  // int s = pthread_mutex_lock(&tree->mutex);
+  // if (s != 0)
+  //   return -1;
 }
 
 Boolean lookup(Tree *tree, char *key, void **value) {
