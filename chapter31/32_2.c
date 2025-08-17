@@ -3,6 +3,7 @@
 #include "tlpi_hdr.h"
 #include <error_functions.h>
 #include <pthread.h>
+#include <stdio.h>
 #include <string.h>
 
 #define BUF_SIZE 1024
@@ -27,7 +28,7 @@ char *dirname_local(char *path) {
   if (s != 0)
     errExitEN(s, "pthread_once");
 
-  buf = pthread_getspecific(key);
+  buf = (char *)pthread_getspecific(key);
   if (buf == NULL) {
     buf = (char *)malloc(sizeof(char) * BUF_SIZE);
     if (buf == NULL)
@@ -59,4 +60,109 @@ char *dirname_local(char *path) {
   return buf;
 }
 
-char *basename(char *path) {}
+char *basename_local(char *path) {
+
+  int s, i, j = 0, flag = 0;
+  char *buf;
+
+  s = pthread_once(&once, createKey);
+  if (s != 0)
+    errExitEN(s, "pthread_once");
+
+  buf = (char *)pthread_getspecific(key);
+  if (buf == NULL) {
+    buf = (char *)malloc(sizeof(char) * BUF_SIZE);
+    if (buf == NULL)
+      return NULL;
+    pthread_setspecific(key, buf);
+  }
+  strncpy(buf, path, BUF_SIZE);
+
+  if (buf != NULL && strlen(buf) != 0) {
+
+    i = strlen(buf) - 1;
+    if (i == 0 && buf[i] == '/')
+      return buf;
+    if (buf[i] == '/')
+      buf[i] = '\0';
+
+    for (i = 0; i < strlen(buf); i++) {
+      if (flag == 1) {
+        buf[j++] = buf[i];
+      }
+      if (buf[i] == '/') {
+        j = 0;
+        flag = 1;
+      }
+    }
+    if (flag == 1)
+      buf[j] = '\0';
+    return buf;
+  }
+
+  strcpy(buf, ".");
+  return buf;
+}
+
+static __thread char buf[BUF_SIZE];
+
+char *dirname_thread(char *path) {
+  int i;
+
+  strncpy(buf, path, BUF_SIZE);
+
+  if (buf != NULL && strlen(buf) != 0) {
+
+    i = strlen(buf) - 1;
+    if (buf[i] == '/')
+      buf[i] = '\0';
+
+    for (; i >= 0; i--) {
+
+      if (buf[i] == '/') {
+        if (i == 0) {
+          strcpy(buf, "/");
+          return buf;
+        }
+        buf[i] = '\0';
+        return buf;
+      }
+    }
+  }
+  strcpy(buf, ".");
+  return buf;
+}
+
+int main(int argc, char *argv[]) {
+
+  char buf[29] = "/";
+  int i, j = 0, flag = 0;
+
+  if (buf != NULL && strlen(buf) != 0) {
+
+    i = strlen(buf) - 1;
+    if (i == 0 && buf[i] == '/')
+      printf("%s\n", buf);
+    if (buf[i] == '/')
+      buf[i] = '\0';
+
+    for (i = 0; i < strlen(buf); i++) {
+
+      if (flag == 1) {
+        buf[j++] = buf[i];
+      }
+      if (buf[i] == '/') {
+        j = 0;
+        flag = 1;
+      }
+    }
+    if (flag == 1)
+      buf[j] = '\0';
+    printf("%s\n", buf);
+    return 0;
+  }
+
+  strcpy(buf, ".");
+  printf("%s\n", buf);
+  return 0;
+}
