@@ -132,22 +132,20 @@ char *dirname_thread(char *path) {
   strcpy(buf, ".");
   return buf;
 }
+char *basename_thread(char *path) {
+  int i, flag = 0, j = 0;
 
-int main(int argc, char *argv[]) {
-
-  char buf[29] = "/";
-  int i, j = 0, flag = 0;
+  strncpy(buf, path, BUF_SIZE);
 
   if (buf != NULL && strlen(buf) != 0) {
 
     i = strlen(buf) - 1;
     if (i == 0 && buf[i] == '/')
-      printf("%s\n", buf);
+      return buf;
     if (buf[i] == '/')
       buf[i] = '\0';
 
     for (i = 0; i < strlen(buf); i++) {
-
       if (flag == 1) {
         buf[j++] = buf[i];
       }
@@ -158,11 +156,14 @@ int main(int argc, char *argv[]) {
     }
     if (flag == 1)
       buf[j] = '\0';
-    printf("%s\n", buf);
-    return 0;
+    return buf;
   }
-
   strcpy(buf, ".");
-  printf("%s\n", buf);
-  return 0;
+  return buf;
+}
+int main(int argc, char *argv[]) {
+
+  char *buf1;
+  buf1 = basename_thread("/usr/test");
+  printf("%s\n", buf1);
 }
