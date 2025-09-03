@@ -1,7 +1,5 @@
 
 #include "tlpi_hdr.h"
-#include <cerrno>
-#include <error_functions.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -13,7 +11,9 @@ int main(int argc, char *argv[]) {
   case -1:
     errExit("fork");
   case 0:
+    printf("child sleep\n");
     sleep(10);
+
     execl("/usr/bin/sleep", "sleep", "10", (char *)NULL);
     _exit(EXIT_SUCCESS);
   default:
@@ -26,11 +26,11 @@ int main(int argc, char *argv[]) {
   printf("before pgid = %ld\n", (long)gpid);
 
   if (setpgid(pid, pid) == -1) {
-
     printf("cant modify pgid\n");
   }
+  printf("after pgid = %ld\n", (long)gpid);
 
-  sleep(4);
+  sleep(10);
   if (setpgid(pid, pid) == -1)
     errExit("setpgid");
 
