@@ -1,3 +1,4 @@
+#include <error_functions.h>
 #define _GNU_SOURCE
 #include "tlpi_hdr.h"
 #include <signal.h>
@@ -15,6 +16,12 @@ int main(int argc, char *argv[]) {
 
   if (argc < 2 || strcmp(argv[1], "--help") == 0)
     usageErr("%s {d|s}... [ > sig.log 2 > &1]\n", argv[0]);
+
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  sa.sa_handler = handler;
+  if (sigaction(SIGHUP, &sa, NULL) == -1)
+    errExit("sigaction");
 
   setbuf(stdout, NULL);
 
