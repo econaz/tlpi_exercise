@@ -1,5 +1,4 @@
 #include "tlpi_hdr.h"
-#include <error_functions.h>
 #include <math.h>
 #include <sched.h>
 #include <stdio.h>
@@ -8,32 +7,31 @@
 #include <unistd.h>
 #include <wait.h>
 
-#undef max
-#undef min
-
 void handle(pid_t pid) {
-  struct tms tms;
+  struct tms startTime, endTime;
   clock_t clockTime;
   double time;
   static long clockTicks = 0;
+  long cost;
+  int flag = 0;
+
   if (clockTicks == 0) {
     clockTicks = sysconf(_SC_CLK_TCK);
     if (clockTicks == -1)
       errExit("sysconf");
   }
+  if (times(&startTime) == -1)
+    errExit("times");
 
   for (;;) {
-    if (times(&tms) == -1)
+    if (times(&endTime) == -1)
       errExit("times");
-    time = (double)(tms.tms_stime + tms.tms_utime) / clockTime;
-    if (fmod(time, 0.25) == 0.0) {
-      printf("%d cost 0.25s\n", pid);
-    }
-    if (fmod(time, 1.0) == 0.0) {
-      sched_yield();
-      printf("%d cost 1s\n", pid);
-    }
-    if ((time - 3) < 1e-6)
+
+    cost = (endTime.tms_stime + endTime.tms_utime) -
+           (startTime.tms_stime + startTime.tms_utime) / clockTicks;
+
+    // todo
+    if (cost == 3.0)
       break;
   }
 }
@@ -56,15 +54,16 @@ int main(int argc, char *argv[]) {
   pid = fork();
   switch (pid) {
   case -1:
+
     errExit("fork");
   case 0:
-
     handle(getpid());
+    _exit(EXIT_SUCCESS);
   default:
 
     handle(getpid());
-    // if (wait(&status) == -1)
-    //   errExit("wait");
+    if (wait(&status) == -1)
+      errExit("wait");
   }
 
   return EXIT_SUCCESS;
