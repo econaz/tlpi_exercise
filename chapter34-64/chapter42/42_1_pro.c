@@ -1,6 +1,7 @@
 #include "tlpi_hdr.h"
 #include <dlfcn.h>
 #include <error_functions.h>
+#include <stdio.h>
 
 void handler(void *handler, const char *name) {
 
@@ -30,8 +31,10 @@ int main(int argc, char *argv[]) {
   if (libHandleB == NULL)
     fatal("dlopen: %s", dlerror());
 
-  handler(libHandleA, "liba");
-  handler(libHandleB, "libb");
+  printf("call\n");
+
+  handler(libHandleA, "xyz");
+  handler(libHandleB, "xyz_b");
 
   // (void)dlerror();
   // *(void **)(&funcp) = dlsym(libHandleA, "liba");
@@ -44,9 +47,11 @@ int main(int argc, char *argv[]) {
   // else
   //   (*funcp)();
 
+  printf("close liba\n");
   dlclose(libHandleA);
 
-  handler(libHandleA, "liba");
+  handler(libHandleB, "xyz_b");
+  printf("main exit\n");
 
   exit(EXIT_SUCCESS);
 }
