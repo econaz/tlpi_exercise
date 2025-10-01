@@ -23,6 +23,9 @@ int main(int argc, char *argv[]) {
   dataNumber = getInt(argv[1], GN_ANY_BASE, "dataNumber");
   dataSize = getInt(argv[2], GN_ANY_BASE, "dataSize");
 
+  printf("dataNumber %d\n", dataNumber);
+  printf("dataSize %d\n", dataSize);
+
   if (pipe(pipeFd) == -1)
     errExit("pipe");
 
@@ -41,7 +44,7 @@ int main(int argc, char *argv[]) {
     if (write(pipeFd[1], ptr, dataNumber * dataSize) != dataSize * dataNumber)
       errExit("write");
 
-    printf("send to parent success");
+    printf("send to parent success\n");
 
     close(pipeFd[1]);
 
@@ -56,20 +59,21 @@ int main(int argc, char *argv[]) {
   if (read(pipeFd[0], ptr, dataNumber * dataSize) != dataSize * dataNumber)
     errExit("read");
 
-  printf("read to child success");
+  printf("read to child success\n");
 
   close(pipeFd[0]);
 
   gettimeofday(&end, 0);
 
   second = end.tv_sec - start.tv_sec;
-  micosecond = end.tv_usec - end.tv_usec;
+  micosecond = end.tv_usec - start.tv_usec;
 
   cost = second + micosecond * 1e-6;
 
-  costPer = cost / (dataSize * dataNumber);
+  costPer = (dataSize * dataNumber) / cost;
 
-  printf("recevie data from parent per second :%lf", costPer);
+  printf("cost %f\n", cost);
+  printf("recevie data from parent per second :%lf\n", costPer);
 
-  return EXIT_SUCCESS;
+  exit(EXIT_SUCCESS);
 }
