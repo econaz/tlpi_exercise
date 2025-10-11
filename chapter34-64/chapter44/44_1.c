@@ -3,6 +3,8 @@
 #include <ctype.h>
 #include <error_functions.h>
 #include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 int main(int argc, char *argv[]) {
@@ -22,36 +24,35 @@ int main(int argc, char *argv[]) {
 
   case 0:
 
+    if (close(pipe2Fd[0]) == -1)
+      errExit("child close child read pipe ");
+
+    if (close(pipeFd[1]) == -1)
+      errExit("child close parent write pipe");
+
     for (;;) {
-      if (close(pipeFd[1]) == -1)
-        errExit("child close parent write pipe");
-      if (close(pipe2Fd[0]) == -1)
-        errExit("child close child read pipe ");
+      read(pipeFd[0], data, sizeof(data));
 
-      if (read(pipeFd[0], data, sizeof(data)) != sizeof(data))
-        fatal("child read failed");
-
+      printf("child get data from parent - %s\n", data);
       for (int i = 0; i < strlen(data); i++)
         data[i] = toupper(data[i]);
 
       sleep(3);
 
-      if (write(pipe2Fd[1], data, sizeof(data)) != sizeof(data))
-        fatal("child write failed");
+      write(pipe2Fd[1], data, sizeof(data));
     }
     _exit(EXIT_SUCCESS);
 
   default:
     break;
   }
+  if (close(pipe2Fd[1]) == -1)
+    errExit("parent close child write pipe");
+
+  if (close(pipeFd[0]) == -1)
+    errExit("parent close parent read pipe");
 
   while (1) {
-
-    if (close(pipe2Fd[1]) == -1)
-      errExit("parent close child write pipe");
-
-    if (close(pipeFd[0]) == -1)
-      errExit("parent close parent read pipe");
 
     if (fgets(data, 50, stdin) != NULL)
       break;
@@ -66,13 +67,13 @@ int main(int argc, char *argv[]) {
 
   for (;;) {
 
-    if (write(pipeFd[1], data, sizeof(data)) != sizeof(data))
-      fatal("parent write failed");
+    write(pipeFd[1], data, sizeof(data));
 
     sleep(3);
 
-    if (read(pipe2Fd[0], data, sizeof(data)) != sizeof(data))
-      fatal("parent read failed");
+    read(pipe2Fd[0], data, sizeof(data));
+
+    printf("parent get data from child- %s\n", data);
   }
 
   exit(EXIT_SUCCESS);
