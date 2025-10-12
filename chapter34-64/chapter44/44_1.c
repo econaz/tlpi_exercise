@@ -1,16 +1,14 @@
 #include "tlpi_hdr.h"
 
 #include <ctype.h>
-#include <error_functions.h>
 #include <fcntl.h>
-#include <stdio.h>
-#include <string.h>
 #include <unistd.h>
 
 int main(int argc, char *argv[]) {
 
   int pipeFd[2], pipe2Fd[2];
   char data[50];
+  int n;
 
   if (pipe(pipeFd) == -1)
     errExit("pipe");
@@ -31,15 +29,22 @@ int main(int argc, char *argv[]) {
       errExit("child close parent write pipe");
 
     for (;;) {
-      read(pipeFd[0], data, sizeof(data));
+      n = read(pipeFd[0], data, 50);
+      if (n == -1)
+        errExit("child read");
 
+      // if (n == 0)
+      //   break;
       printf("child get data from parent - %s\n", data);
+
       for (int i = 0; i < strlen(data); i++)
         data[i] = toupper(data[i]);
 
       sleep(3);
 
-      write(pipe2Fd[1], data, sizeof(data));
+      if (write(pipe2Fd[1], data, strlen(data) * sizeof(char)) !=
+          strlen(data) * sizeof(char))
+        errExit("child write");
     }
     _exit(EXIT_SUCCESS);
 
@@ -59,21 +64,23 @@ int main(int argc, char *argv[]) {
     continue;
   }
 
-  printf("%s\n", data);
-
-  printf("%ld\n", strlen(data));
-
-  printf("%lu\n", sizeof(data));
-
   for (;;) {
 
-    write(pipeFd[1], data, sizeof(data));
+    size_t size;
+    size = (strlen(data) - 1) * sizeof(char);
+
+    if (write(pipeFd[1], data, size) != size)
+      errExit("parent write");
 
     sleep(3);
 
-    read(pipe2Fd[0], data, sizeof(data));
+    if (read(pipe2Fd[0], data, size) != size)
+      errExit("parent read");
 
     printf("parent get data from child- %s\n", data);
+
+    for (int i = 0; i < strlen(data); i++)
+      data[i] = tolower(data[i]);
   }
 
   exit(EXIT_SUCCESS);
