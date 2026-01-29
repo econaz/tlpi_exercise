@@ -1,15 +1,11 @@
 #include "curr_time.h"
 #include "semun.h"
 #include "tlpi_hdr.h"
-#include <errno.h>
-#include <error_functions.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <unistd.h>
 
 int main(int argc, char *argv[]) {
   union semun arg;
@@ -29,10 +25,11 @@ int main(int argc, char *argv[]) {
     errExit("fork");
   case 0:
 
-    printf("child started pid = %ld", (long)getpid());
+    printf("child started pid = %ld,time:%s\n ", (long)getpid(),
+           currTime("%T"));
     sop.sem_flg = 0;
     sop.sem_num = 0;
-    sop.sem_op = 1;
+    sop.sem_op = -1;
     if (semop(semid, &sop, 1) == -1)
       errExit("semop");
 
@@ -41,15 +38,17 @@ int main(int argc, char *argv[]) {
     _exit(EXIT_SUCCESS);
 
   default:
-    printf("parent started pid = %s\n", (long)getpid());
+    printf("parent wait for child pid = %ld\n,time:%s\n", (long)getpid(),
+           currTime("%T"));
 
     sop.sem_flg = 0;
     sop.sem_num = 0;
-    sop.sem_op = 0;
+    sop.sem_op = 0; // wait for child set value = 0;
+
     if (semop(semid, &sop, 1) == -1)
       errExit("semop");
 
-    printf("parent got work\n");
+    printf("parent got work wait:%s\n", currTime("%T"));
 
     if (semctl(semid, 0, IPC_RMID) == -1)
       errExit("semctl RMID");
