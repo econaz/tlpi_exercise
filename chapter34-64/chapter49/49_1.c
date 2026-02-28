@@ -17,6 +17,7 @@ int main(int argc, char *argv[]) {
     usageErr("usage %s filename desfilname", argv[0]);
 
   fd = open(argv[1], O_RDWR);
+  
   if (fd == -1)
     errExit("open");
 

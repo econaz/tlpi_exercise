@@ -1,9 +1,8 @@
-#include <unistd.h>
-#include <sys/mman.h>
-#include <fcntl.h>
-#include "svshm_xfr.h"
 #include "semun.h"
-
+#include "svshm_xfr.h"
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <unistd.h>
 
 int main(int argc,char *argv[])
 {
