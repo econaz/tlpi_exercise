@@ -28,8 +28,16 @@ int main(int argc,char *argv[])
 
     snprintf(clientFifo, CLIENT_FIFO_NAME_LEN, CLIENT_FIFO_TEMPLATE,(long) req.pid);
 
-    if (mq_open(, int oflag, ...)
+    if ((clientMq = mq_open(clientFifo, O_RDONLY,0,attr)) == -1){
+      errMsg("open %s",clientFifo);
+      continue;
+    }
+    resp.seqNum = seqNum;
+    if (mq_send(clientMq, (char *)&resp, attr.mq_msgsize, NULL) == -1)
+      fprintf(stderr, "Error writing to FIFO %s\n",clientFifo);
+    if (mq_close(clientMq) == -1)
+      errMsg("close");
 
-
+    seqNum += req.seqLen;
   }
 }
