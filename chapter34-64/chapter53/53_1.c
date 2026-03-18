@@ -1,9 +1,6 @@
-#include <error_functions.h>
 #include <pthread.h>
 #include <fcntl.h>
 #include <semaphore.h>
-#include <stdio.h>
-#include <unistd.h>
 #include "tlpi_hdr.h"
 
 
@@ -11,7 +8,8 @@
 
 
 static char buffer[BUF_SIZE];
-static sem_t sem;
+static sem_t wSem;
+static sem_t rSem;
 static volatile ssize_t num = 0;
 
 
@@ -21,7 +19,7 @@ void *readFunc(void *arg){
 
   for (xfrs = 0,bytes = 0;;xfrs++){
 
-    if (sem_wait(&sem) == -1)
+    if (sem_wait(&rSem) == -1)
       errExit("sem_wait");
 
     if (num == 0)
@@ -31,16 +29,16 @@ void *readFunc(void *arg){
     if (write(STDOUT_FILENO, buffer, num) != num)
       fatal("partial/failed write");
 
-    if (sem_post(&sem) == -1)
+   if (sem_post(&wSem) == -1)
       errExit("sem_post");
   }
 
-  if (sem_wait(&sem) == -1)
-    errExit("sem_wait");
 
+  if (sem_post(&wSem) == -1)
+    errExit("sem_wait");
+  
   fprintf(stderr, "Recevie %d bytes (%d xfrs)\n",bytes,xfrs);
   
-
   return NULL;
 
 }
@@ -50,23 +48,24 @@ void *writeFunc(void *arg){
   int xfrs,bytes;
 
   for (xfrs = 0,bytes = 0;;xfrs++,bytes+=num){
-    if (sem_wait(&sem) == -1)
-      errExit("sem_wait");
+    if (sem_wait(&wSem) == -1)
+     errExit("sem_wait");
 
     num = read(STDIN_FILENO, buffer, BUF_SIZE);
     if (num == -1)
       errExit("read");
 
-    if (sem_post(&sem) == -1)
+    if (sem_post(&rSem) == -1)
       errExit("sem_post");
 
     if (num == 0)
       break;
-  }
 
+  }
+  
   fprintf(stderr, "Sent %d bytes (%d xfrs)\n",bytes,xfrs);
 
-  if (sem_post(&sem) == -1)
+  if (sem_wait(&rSem) == -1)
     errExit("sem_post");
 
   return NULL;
@@ -78,7 +77,10 @@ int main(int argc,char *arg[]){
   int s;
 
   
-  if (sem_init(&sem, 0, 1) == -1)
+  if (sem_init(&wSem, 0, 1) == -1)
+    errExit("sem_init");
+
+  if (sem_init(&rSem,0,0) == -1)
     errExit("sem_init");
 
   s = pthread_create(&wThread, NULL, writeFunc, NULL);
