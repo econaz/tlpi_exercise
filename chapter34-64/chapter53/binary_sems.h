@@ -6,7 +6,7 @@
 extern Boolean bsUseSemUndo;
 extern Boolean bsRetryOnEintr;
 
-int initSemAvailable(int semId, int semNum,int value);
+int initSemAvailable(int semId, int semNum);
 
 int initSemInUse(int semId, int semNum);
 
