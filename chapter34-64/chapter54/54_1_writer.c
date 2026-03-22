@@ -2,7 +2,7 @@
 #include <error_functions.h>
 #include <fcntl.h>
 #include <semaphore.h>
-#include <stdio.h>
+#include <sys/mman.h>
 
 
 int main(int argc,char *argv[]){
@@ -14,17 +14,20 @@ int main(int argc,char *argv[]){
 
   printf("test1\n");
 
-  wSem = sem_open(WRITE_SEM, O_RDWR,S_IRUSR | S_IWUSR,1);
-  if (wSem == SEM_FAILED)
-    errExit("sem_open");
+  sem_destroy(rSem);
+  sem_destroy(wSem);
 
-  rSem = sem_open(READ_SEM, O_RDWR,S_IRUSR | S_IRUSR,0);
+ rSem = sem_open(WRITE_SEM, O_RDWR | O_CREAT | O_EXCL,OBJ_PERMS,1);
+  if (wSem == SEM_FAILED)
+    errExit("sem_open1");
+
+  rSem = sem_open(READ_SEM,O_RDWR | O_CREAT | O_EXCL,OBJ_PERMS,0);
   if (rSem == SEM_FAILED)
-    errExit("sem_open");
+    errExit("sem_open2");
 
 
   printf("test\n");
-  shmid = shm_open(SHM_NAME, O_RDWR, 0);
+  shmid = shm_open(SHM_NAME, O_RDWR | O_CREAT | O_EXCL,OBJ_PERMS);
   if (shmid == -1)
     errExit("shm_open");
 
@@ -61,7 +64,17 @@ int main(int argc,char *argv[]){
   if (sem_wait(wSem) == -1)
     errExit("sem_wait");
 
+  if (shm_unlink(SHM_NAME) == -1)
+    errExit("shm_unlink");
+  
   fprintf(stderr, "Send %d bytes (%d xfrs)\n",bytes,xfrs);
+
+  if (sem_destroy(rSem) == -1)
+    errExit("sem_destroy");
+  if (sem_destroy(wSem) == -1)
+    errExit("sem_destory");
+
+  
   exit(EXIT_SUCCESS);
 
 }

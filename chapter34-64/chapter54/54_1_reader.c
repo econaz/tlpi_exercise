@@ -1,4 +1,5 @@
 #include "54_1.h"
+#include <fcntl.h>
 #include <semaphore.h>
 #include <sys/mman.h>
 
@@ -10,7 +11,7 @@ int main(int argc,char *argv[]){
   struct shmseg *shmp;
 
   
-  shmid = shm_open(SHM_NAME, O_RDONLY, 0);
+  shmid = shm_open(SHM_NAME, O_RDWR, OBJ_PERMS);
   if (shmid == -1)
     errExit("shm_open");
 
