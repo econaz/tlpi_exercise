@@ -10,6 +10,8 @@
 
 #define OBJ_PERMS (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)
 
+#define WRITE_SEM "/WRITE_SEM"
+#define READ_SEM  "/READ_SEM"
 
 
 #ifndef BUF_SIZE
@@ -18,6 +20,11 @@
 
 
 
-static sem_t rSem;
-static sem_t wSem;
-static volatile ssize_t num = 0;
+static sem_t *rSem;
+static sem_t *wSem;
+
+struct shmseg
+{
+  int cnt;
+  char buf[BUF_SIZE];
+};
