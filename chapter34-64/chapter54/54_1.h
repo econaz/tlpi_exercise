@@ -6,12 +6,12 @@
 
 
 
-#define SHM_NAME "/SHM_DEMO"
+#define SHM_NAME "/SHM"
 
 #define OBJ_PERMS (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)
 
-#define WRITE_SEM "/WRITE_SEM"
-#define READ_SEM  "/READ_SEM"
+#define WRITE_SEM "/WRITE"
+#define READ_SEM  "/READ"
 
 
 #ifndef BUF_SIZE

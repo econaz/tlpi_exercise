@@ -1,5 +1,4 @@
 #include "54_1.h"
-#include <error_functions.h>
 #include <fcntl.h>
 #include <semaphore.h>
 #include <sys/mman.h>
@@ -14,10 +13,13 @@ int main(int argc,char *argv[]){
 
   printf("test1\n");
 
-  sem_destroy(rSem);
-  sem_destroy(wSem);
+  sem_unlink(WRITE_SEM);
+  sem_unlink(READ_SEM);
+  shm_unlink(SHM_NAME);
 
- rSem = sem_open(WRITE_SEM, O_RDWR | O_CREAT | O_EXCL,OBJ_PERMS,1);
+
+  
+  wSem = sem_open(WRITE_SEM, O_RDWR | O_CREAT | O_EXCL,OBJ_PERMS,1);
   if (wSem == SEM_FAILED)
     errExit("sem_open1");
 
@@ -31,6 +33,7 @@ int main(int argc,char *argv[]){
   if (shmid == -1)
     errExit("shm_open");
 
+  
   if (ftruncate(shmid, sizeof(struct shmseg)) == -1)
     errExit("ftruncate");
 
@@ -69,9 +72,9 @@ int main(int argc,char *argv[]){
   
   fprintf(stderr, "Send %d bytes (%d xfrs)\n",bytes,xfrs);
 
-  if (sem_destroy(rSem) == -1)
+  if (sem_unlink(READ_SEM) == -1)
     errExit("sem_destroy");
-  if (sem_destroy(wSem) == -1)
+  if (sem_unlink(WRITE_SEM) == -1)
     errExit("sem_destory");
 
   
