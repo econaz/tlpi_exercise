@@ -1,14 +1,6 @@
 #include <errno.h>
 #include <unistd.h>
-
-#define BUF_SIZE 4096
-
-struct rlbuf {
-  int len;
-  char buf[BUF_SIZE];
-  int next;
-  int fd;
-};
+#include "59_1.h"
 
 int readLineBufInit(int fd, struct rlbuf *buf) {
   buf->len = 0;
@@ -23,33 +15,17 @@ int readLineBuf(struct rlbuf *rlbuf) {
   ssize_t numRead;
   ssize_t tolRead = 0;
   char buff[BUF_SIZE];
-  int n = 1024;
 
   if (rlbuf == NULL) {
     errno = EINVAL;
     return -1;
   }
+  numRead = read(rlbuf->fd, rlbuf->buf, BUF_SIZE - 1);
+  if (numRead == -1)
+    return -1;
+  if (numRead == 0)
+    return 0;
+  rlbuf->buf[numRead++] = '\0';
 
-  for (;;) {
-
-    numRead = read(rlbuf->fd, buff, n);
-    if (numRead == -1) {
-      if (errno == EINTR)
-        continue;
-      else
-        return -1;
-    } else if (numRead == 0) {
-      if (tolRead == 0)
-        return 0;
-      else
-        break;
-    }
-    else {
-      tolRead += numRead;
-      if (tolRead > BUF_SIZE){
-        
-      }
-    }
-  }
-  
+  return numRead;
 }
